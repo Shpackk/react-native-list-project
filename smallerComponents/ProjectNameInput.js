@@ -12,6 +12,7 @@ const ProjectNameInput = ({projects}) => {
 	}
 
 	const onSubmitEditing = ({nativeEvent: {text}}) => {
+		if (!text) return;
 		const projectName = text.trim()
 
 		const newProject = {
@@ -35,6 +36,7 @@ const ProjectNameInput = ({projects}) => {
 			onChangeText={onChangeText}
 			onSubmitEditing={onSubmitEditing}
 			blurOnSubmit={true}
+			underlineColor='transparent'
       	/>
 	)
 }
@@ -44,8 +46,10 @@ const styles = StyleSheet.create({
 		alignSelf: 'stretch',
 		height: 40,
 		margin: 12,
-		borderWidth: 1,
+		borderColor: '#4EB1A9',
 		padding: 10,
+		borderTopRightRadius: 20,
+		borderBottomLeftRadius: 20,
 	  },
  }); 
 

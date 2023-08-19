@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react"
 import { 
 	Appbar,
-	Button,
 	PaperProvider,
 	DataTable,
 	TextInput,
@@ -16,6 +15,7 @@ import { projectFull } from "../../FAKEDB/projectsList"
 const ProjectItem = () => {
 	const local = useLocalSearchParams();
 	const [expenses, setExpenses] = useState([]);
+	const [forEdit, setForEdit] = useState(false);
 	const [expenseInputVisible, setExpenseInputVisible] = useState(false);
 	const [totalPrice, setTotalPrice] = useState(0);
 	const [pickedRow, setPickedRow] = useState(null);
@@ -23,7 +23,7 @@ const ProjectItem = () => {
 	useEffect(() => {
 		const newPrice = expenses.reduce((prev, curr) =>  prev += Number(curr.price * curr.amount) ,0)
 		setTotalPrice(newPrice)
-	}, [expenses.length])
+	}, [expenses.length, forEdit])
 
 
 	return (
@@ -34,8 +34,12 @@ const ProjectItem = () => {
 			{	
 				expenseInputVisible && 
 					<ExpenseTextInput
+						forEdit={forEdit}
+						setForEdit={setForEdit}
 						expenses={expenses} 
 						setExpenseInputVisible={setExpenseInputVisible}
+						pickedRow={pickedRow}
+						setExpenses={setExpenses}
 					/>
 			}{
 				!expenseInputVisible && 
@@ -45,6 +49,8 @@ const ProjectItem = () => {
 						pickedRow={pickedRow}
 						setExpenses={setExpenses}
 						setPickedRow={setPickedRow}
+						setForEdit={setForEdit}
+						forEdit={forEdit}
 					/>
 			}
 		</View>
@@ -52,7 +58,6 @@ const ProjectItem = () => {
 }
 
 const Table = ({expenses, setPickedRow, pickedRow}) => {
-	console.log(pickedRow)
 	const onPress = (event, pressedExpenseData) => {
 		pickedRow ? setPickedRow(null) : setPickedRow(pressedExpenseData)
 	}
@@ -81,7 +86,7 @@ const Table = ({expenses, setPickedRow, pickedRow}) => {
 }
 
 
-const IconsMenu = ({setExpenseInputVisible, pickedRow, setExpenses, setPickedRow}) => {
+const IconsMenu = ({setExpenseInputVisible, pickedRow, setExpenses, setPickedRow, forEdit, setForEdit}) => {
 	const pickedStyles = {
 		justifyContent: pickedRow ? 'space-between' : 'center',
 	}
@@ -97,6 +102,11 @@ const IconsMenu = ({setExpenseInputVisible, pickedRow, setExpenses, setPickedRow
 		setPickedRow(null)
 	}
 
+	const onEditPress = () => {
+		setForEdit((prev) => !prev)
+		setExpenseInputVisible((prev) => !prev)
+	}
+
 	return (
 		<View style={{...styles.buttonsMenu, ...pickedStyles}}>
 			{pickedRow &&
@@ -105,7 +115,7 @@ const IconsMenu = ({setExpenseInputVisible, pickedRow, setExpenses, setPickedRow
 					icon="pencil"
 					iconColor={MD3Colors.neutral100}
 					size={30}
-					onPress={() => console.log('Pressed')}
+					onPress={onEditPress}
 				/>
 				<IconButton
 					icon="minus"
@@ -141,29 +151,60 @@ const TotalBar = ({totalPrice}) => {
 	)
 }
 
-const ExpenseTextInput = ({expenses, setExpenseInputVisible}) => {
-	const [_, setInput] = useState('');
+const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit, pickedRow, setExpenses}) => {
+	const [input, setInput] = useState(() => {
+		if (forEdit) {
+			const {type, parameters, amount, price} = pickedRow;
+			return `${type},${parameters},${amount},${price}`;
+		}
+		return ''
+	});
+
+	const onChangeText = (something) => {
+		setInput(something)
+	}
 
 	const onSubmitEditing = ({nativeEvent: {text}}) => {
-		if (!text) return setExpenseInputVisible(false);
+		if (!forEdit) {
+			if (!text) return setExpenseInputVisible(false);
 
-		const items = text.split(',')
-		expenses.push({
-			key: expenses.at(-1)?.key + 1 || 1,
-			type: items[0],
-			parameters: items[1],
-			amount: items[2],
-			price: items[3]
-		})
-		setInput('')
-		setExpenseInputVisible(false)
+			const items = text.split(',')
+			expenses.push({
+				key: expenses.at(-1)?.key + 1 || 1,
+				type: items[0],
+				parameters: items[1],
+				amount: items[2],
+				price: items[3]
+			})
+			setInput('')
+			setExpenseInputVisible(false)
+		} else {
+			const items = text.split(',')
+			setExpenses((prev) => prev.map((expense) => {
+				if (expense.key === pickedRow.key) {
+					return {
+						key: expense.key,
+						type: items[0],
+						parameters: items[1],
+						amount: items[2],
+						price: items[3]
+					}
+				}
+				return expense;
+			}))
+			setInput('')
+			setForEdit(false)
+			setExpenseInputVisible(false)
+		}
 	};
 
 	return (
 		<TextInput
 			autoFocus
 			onSubmitEditing={onSubmitEditing}
+			onChangeText={onChangeText}
 			blurOnSubmit={true}
+			value={input}
 	  	/>
 	)
 }

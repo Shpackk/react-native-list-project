@@ -13,9 +13,6 @@ projects.forEach(({id, title}) => {
 	}
 })
 
-console.log(projectFull)
-
-
 export {
 	projects,
 	projectFull,
