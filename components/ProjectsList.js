@@ -9,14 +9,14 @@ import {
 import { Link } from 'expo-router'
 
 
-const PressableItem = ({item: {title, id}}) => {
+const PressableItem = ({item}) => {
 	return (
 		<Link href={{
 			pathname: '/projects/[id]',
-			params: { id }
+			params: { id: item }
 		}} asChild>
 			<Pressable style={styles.item}>
-				<Text style={styles.title}>{title}</Text>
+				<Text style={styles.title}>{item}</Text>
 			</Pressable>
 		</Link>
 	)
@@ -28,7 +28,7 @@ const ProjectsList = (props) => {
 		<FlatList
 			data={props.data}
 			renderItem={({item}) => <PressableItem item={item}/>}
-			keyExtractor={item => item.id}
+			keyExtractor={item => item}
 		/>
     </SafeAreaView>
   );

@@ -1,30 +1,30 @@
 import { TextInput } from 'react-native-paper'
 import { StyleSheet } from 'react-native';
 import { useState } from 'react';
-import { projectFull } from '../FAKEDB/projectsList';
+import { storage } from '../system/storage';
 
-
-const ProjectNameInput = ({projects}) => {
+const ProjectNameInput = ({setProjects}) => {
 	const [text, setText] = useState('')
 
 	const onChangeText = (text) => {
 		setText(text)
 	}
 
-	const onSubmitEditing = ({nativeEvent: {text}}) => {
+	const onSubmitEditing = async ({nativeEvent: {text}}) => {		
 		if (!text) return;
 		const projectName = text.trim()
-
+		
 		const newProject = {
 			id: Math.random().toString(36),
-			title: projectName
+			title: projectName,
+			expenses: [],
 		}
-		
-		projects.unshift(newProject)
 
-		projectFull[newProject.id] = {
-			title: newProject.title
-		}
+		setProjects((prev) => {
+			storage.set(projectName, JSON.stringify(newProject));
+			return [projectName, ...prev]
+		})
+
 		setText('')
 	}
 

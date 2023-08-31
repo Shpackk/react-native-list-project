@@ -10,36 +10,49 @@ import {
 } from "react-native-paper"
 import { useLocalSearchParams, router } from 'expo-router'
 import { StyleSheet, View } from "react-native"
-import { projectFull } from "../../FAKEDB/projectsList"
+import { storage } from "../../system/storage"
+import { useMMKVObject } from "react-native-mmkv"
 
 const ProjectItem = () => {
 	const local = useLocalSearchParams();
-	const [expenses, setExpenses] = useState([]);
-	const [forEdit, setForEdit] = useState(false);
-	const [expenseInputVisible, setExpenseInputVisible] = useState(false);
+	const [currentProject, _] = useMMKVObject(local.id);
+	/*
+		expenses: {
+			key:
+			type: 
+			parameter:
+			amount:
+			price:
+		}
+	 */
 	const [totalPrice, setTotalPrice] = useState(0);
+
+	// togglers
+	const [expenseInputVisible, setExpenseInputVisible] = useState(false);
+	const [forEdit, setForEdit] = useState(false);
 	const [pickedRow, setPickedRow] = useState(null);
 
 	useEffect(() => {
-		const newPrice = expenses.reduce((prev, curr) =>  prev += Number(curr.price * curr.amount) ,0)
+		const newPrice = currentProject.expenses.reduce((prev, curr) =>  prev += Number(curr.price * curr.amount) ,0)
 		setTotalPrice(newPrice)
-	}, [expenses.length, forEdit])
+		storage.set(local.id, JSON.stringify(currentProject));
+	}, [currentProject.expenses.length, forEdit])
 
 
 	return (
 		<View style={{...styles.container }}> 
-			<TopNavBar projectId={local.id} />
-			<Table expenses={expenses} setPickedRow={setPickedRow} pickedRow={pickedRow}/>
+			<TopNavBar projectName={currentProject.title} />
+			<Table expenses={currentProject.expenses} setPickedRow={setPickedRow} pickedRow={pickedRow}/>
 			<TotalBar totalPrice={totalPrice} />
 			{	
 				expenseInputVisible && 
 					<ExpenseTextInput
 						forEdit={forEdit}
 						setForEdit={setForEdit}
-						expenses={expenses} 
+						expenses={currentProject.expenses} 
 						setExpenseInputVisible={setExpenseInputVisible}
 						pickedRow={pickedRow}
-						setExpenses={setExpenses}
+						setPickedRow={setPickedRow}
 					/>
 			}{
 				!expenseInputVisible && 
@@ -47,10 +60,9 @@ const ProjectItem = () => {
 						setExpenseInputVisible={setExpenseInputVisible} 
 						expenseInputVisible={expenseInputVisible}	
 						pickedRow={pickedRow}
-						setExpenses={setExpenses}
+						currentProject={currentProject}
 						setPickedRow={setPickedRow}
 						setForEdit={setForEdit}
-						forEdit={forEdit}
 					/>
 			}
 		</View>
@@ -58,7 +70,7 @@ const ProjectItem = () => {
 }
 
 const Table = ({expenses, setPickedRow, pickedRow}) => {
-	const onPress = (event, pressedExpenseData) => {
+	const onPress = (pressedExpenseData) => {
 		pickedRow ? setPickedRow(null) : setPickedRow(pressedExpenseData)
 	}
 
@@ -72,8 +84,8 @@ const Table = ({expenses, setPickedRow, pickedRow}) => {
 					<DataTable.Title numeric>Price</DataTable.Title>
 				</DataTable.Header>		
 
-			{expenses.map((expense) => (
-				<DataTable.Row style={{backgroundColor: pickedRow?.key === expense.key ? 'gray' : 'black'}} onPress={(event) => onPress(event ,expense)} key={expense.key}>
+			{expenses.map((expense, index) => (
+				<DataTable.Row style={{backgroundColor: pickedRow?.key === expense.key ? 'gray' : 'black'}} onPress={() => onPress({...expense, index})} key={expense.key}>
 					<DataTable.Cell>{expense.type}</DataTable.Cell>
 					<DataTable.Cell numeric>{expense.parameters}</DataTable.Cell>
 					<DataTable.Cell numeric>{expense.amount}</DataTable.Cell>
@@ -86,7 +98,7 @@ const Table = ({expenses, setPickedRow, pickedRow}) => {
 }
 
 
-const IconsMenu = ({setExpenseInputVisible, pickedRow, setExpenses, setPickedRow, forEdit, setForEdit}) => {
+const IconsMenu = ({setExpenseInputVisible, pickedRow, currentProject, setPickedRow, setForEdit}) => {
 	const pickedStyles = {
 		justifyContent: pickedRow ? 'space-between' : 'center',
 	}
@@ -96,9 +108,7 @@ const IconsMenu = ({setExpenseInputVisible, pickedRow, setExpenses, setPickedRow
 
 	const onDeletePress = () => {
 		const keyToDelete = pickedRow.key
-		setExpenses((oldExpenses) => {
-			return oldExpenses.filter((expense) => expense.key !== keyToDelete)
-		})
+		currentProject.expenses = currentProject.expenses.filter((expense) => expense.key !== keyToDelete);
 		setPickedRow(null)
 	}
 
@@ -151,7 +161,7 @@ const TotalBar = ({totalPrice}) => {
 	)
 }
 
-const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit, pickedRow, setExpenses}) => {
+const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit, pickedRow, setPickedRow}) => {
 	const [input, setInput] = useState(() => {
 		if (forEdit) {
 			const {type, parameters, amount, price} = pickedRow;
@@ -165,10 +175,10 @@ const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit
 	}
 
 	const onSubmitEditing = ({nativeEvent: {text}}) => {
+		const items = text.split(',')
 		if (!forEdit) {
 			if (!text) return setExpenseInputVisible(false);
 
-			const items = text.split(',')
 			expenses.push({
 				key: expenses.at(-1)?.key + 1 || 1,
 				type: items[0],
@@ -179,22 +189,18 @@ const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit
 			setInput('')
 			setExpenseInputVisible(false)
 		} else {
-			const items = text.split(',')
-			setExpenses((prev) => prev.map((expense) => {
-				if (expense.key === pickedRow.key) {
-					return {
-						key: expense.key,
-						type: items[0],
-						parameters: items[1],
-						amount: items[2],
-						price: items[3]
-					}
-				}
-				return expense;
-			}))
+			expenses[pickedRow.index] = {
+				key: expenses[pickedRow.index].key,
+				type: items[0],
+				parameters: items[1],
+				amount: items[2],
+				price: items[3]
+			}
+			
 			setInput('')
 			setForEdit(false)
 			setExpenseInputVisible(false)
+			setPickedRow(null)
 		}
 	};
 
@@ -209,9 +215,7 @@ const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit
 	)
 }
 
-const TopNavBar = ({projectId}) => {
-	const projectName = projectFull[projectId]?.title
-
+const TopNavBar = ({projectName}) => {
 	const onPress = () => {
 		router.back();
 	}

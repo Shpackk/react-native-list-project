@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import ProjectsList from '../components/ProjectsList';
 import ProjectNameInput from '../smallerComponents/ProjectNameInput';
-import { projects } from '../FAKEDB/projectsList';
+import { storage } from '../system/storage';
 
 const ProjectsMenu = () => {
+	const [projects, setProjects] = useState(() => {
+		const list = storage.getAllKeys();
+		return list;
+	})
+
+	useEffect(() => {}, [projects])
 
 	return (
 		<View style={styles.container}>
-			<ProjectsList data={projects}/>
+			<ProjectsList data={projects} />
 			<ProjectNameInput
-				projects={projects}
+				setProjects={setProjects}
 			/>
 		</View>
 	);
