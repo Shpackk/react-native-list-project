@@ -43,7 +43,7 @@ const ProjectItem = () => {
 		<View style={{...styles.container }}> 
 			<TopNavBar projectName={currentProject.title} />
 			<Table expenses={currentProject.expenses} setPickedRow={setPickedRow} pickedRow={pickedRow}/>
-			<TotalBar totalPrice={totalPrice} />
+			<TotalBar totalPrice={totalPrice} budget={currentProject.budget}/>
 			{	
 				expenseInputVisible && 
 					<ExpenseTextInput
@@ -74,6 +74,19 @@ const Table = ({expenses, setPickedRow, pickedRow}) => {
 		pickedRow ? setPickedRow(null) : setPickedRow(pressedExpenseData)
 	}
 
+	const [page, setPage] = useState(0);
+	const [numberOfItemsPerPageList] = useState([7]);
+	const [itemsPerPage, _] = useState(
+	  numberOfItemsPerPageList[0]
+	);
+
+	const from = page * itemsPerPage;
+	const to = Math.min((page + 1) * itemsPerPage, expenses.length);
+  
+	useEffect(() => {
+	  setPage(0);
+	}, [itemsPerPage]);
+
 	return (
 		<PaperProvider>
 			<DataTable style={styles.dataTable}>
@@ -84,7 +97,7 @@ const Table = ({expenses, setPickedRow, pickedRow}) => {
 					<DataTable.Title numeric>Price</DataTable.Title>
 				</DataTable.Header>		
 
-			{expenses.map((expense, index) => (
+			{expenses.slice(from, to).map((expense, index) => (
 				<DataTable.Row style={{backgroundColor: pickedRow?.key === expense.key ? 'gray' : 'black'}} onPress={() => onPress({...expense, index})} key={expense.key}>
 					<DataTable.Cell>{expense.type}</DataTable.Cell>
 					<DataTable.Cell numeric>{expense.parameters}</DataTable.Cell>
@@ -92,6 +105,15 @@ const Table = ({expenses, setPickedRow, pickedRow}) => {
 					<DataTable.Cell numeric>{expense.price}</DataTable.Cell>
 				</DataTable.Row>
 			))}
+
+			<DataTable.Pagination
+				page={page}
+				numberOfPages={Math.ceil(expenses.length / itemsPerPage)}
+				onPageChange={(page) => setPage(page)}
+				label={`${from + 1}-${to} of ${expenses.length}`}
+				numberOfItemsPerPageList={numberOfItemsPerPageList}
+				numberOfItemsPerPage={itemsPerPage}
+      		/>
 			</DataTable>
 		</PaperProvider>
 	  );
@@ -147,18 +169,39 @@ const IconsMenu = ({setExpenseInputVisible, pickedRow, currentProject, setPicked
 	)
 }
 
-const TotalBar = ({totalPrice}) => {
+const TotalBar = ({totalPrice, budget}) => {
 	return (
+		<View style={{flexDirection: 'column'}}>
+			<ReturnTopicValuePair topic={'Expenses'} value={totalPrice} valueColor={'yellow'}/>
+			<ReturnTopicValuePair topic={'Budget'} value={budget} valueColor={'green'}/>
+			<ReturnTopicValuePair topic={'Result'} value={budget - totalPrice} valueColor={'cyan'}/>
+		</View>
+	)
+}
+
+const ReturnTopicValuePair = ({topic, value, valueColor}) => {
+  return (
+	<>
 		<Text 
-			variant="headlineMedium"
+			variant="headlineSmall"
 			style={{
 				backgroundColor: 'black',
 				color: 'white',
 				paddingBottom: 5,
 				paddingLeft: 5,
 			}}
-		>{`Total expenses: ${totalPrice}`}</Text>
-	)
+		>{topic}:</Text>
+		<Text 
+			variant="headlineSmall"
+			style={{
+				backgroundColor: 'black',
+				color: valueColor,
+				paddingBottom: 5,
+				paddingLeft: 5,
+			}}
+		>{value}</Text>
+	</>
+  )
 }
 
 const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit, pickedRow, setPickedRow}) => {

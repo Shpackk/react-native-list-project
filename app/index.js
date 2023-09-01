@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import ProjectsList from '../components/ProjectsList';
-import ProjectNameInput from '../smallerComponents/ProjectNameInput';
 import { storage } from '../system/storage';
-import { Text, IconButton, TextInput } from 'react-native-paper';
+import { IconButton, TextInput } from 'react-native-paper';
 
 const getInitialProjectState = () => {
 	const list = storage.getAllKeys();
@@ -27,7 +26,6 @@ const ProjectsMenu = () => {
 		<View style={styles.container}>
 			<ProjectsList projects={projects} />
 			{newProjectView}
-			{/* <ProjectNameInput setProjects={setProjects}/> */}
 		</View>
 	);
 }
