@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
-    "scheme": "my-app",
+    "name": "Projects",
+    "slug": "Projects",
+    "scheme": "Projects",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

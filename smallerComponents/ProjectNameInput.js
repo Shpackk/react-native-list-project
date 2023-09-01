@@ -13,17 +13,21 @@ const ProjectNameInput = ({setProjects}) => {
 	const onSubmitEditing = async ({nativeEvent: {text}}) => {		
 		if (!text) return;
 		const projectName = text.trim()
-		
+		const status = 'inProgress';
+		const address = 'Malinovskogo 45';
+		const budget = 10000;
+	
 		const newProject = {
 			id: Math.random().toString(36),
 			title: projectName,
+			budget,
+			status,
+			address,
 			expenses: [],
 		}
 
-		setProjects((prev) => {
-			storage.set(projectName, JSON.stringify(newProject));
-			return [projectName, ...prev]
-		})
+		setProjects((prev) => [newProject, ...prev])
+		storage.set(projectName, JSON.stringify(newProject));
 
 		setText('')
 	}
@@ -35,7 +39,6 @@ const ProjectNameInput = ({setProjects}) => {
 			placeholder='Project'
 			onChangeText={onChangeText}
 			onSubmitEditing={onSubmitEditing}
-			blurOnSubmit={true}
 			underlineColor='transparent'
       	/>
 	)
