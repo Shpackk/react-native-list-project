@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import ProjectsList from '../components/ProjectsList';
 import { storage } from '../system/storage';
-import { IconButton, TextInput } from 'react-native-paper';
+import { IconButton, TextInput, HelperText } from 'react-native-paper';
 
 const getInitialProjectState = () => {
 	const list = storage.getAllKeys();
@@ -16,30 +16,29 @@ const ProjectsMenu = () => {
 	const [modalVisible, setModalVisible] = useState(false);
 	const [projects, setProjects] = useState(() => getInitialProjectState())
 
-	const onPress = () => {
-		setModalVisible(prev => !prev)
-	}
-
-	const newProjectView = modalVisible ? <NewProjectModal setProjects={setProjects} setModalVisible={setModalVisible}/> : <IconButton icon="plus" size={40} onPress={onPress}/>
+	const onPress = () => setModalVisible(prev => !prev);
 
 	return (
 		<View style={styles.container}>
-			<ProjectsList projects={projects} />
-			{newProjectView}
+			<ProjectsList projects={projects} setProjects={setProjects}/>
+			{ modalVisible
+				? <NewProjectModal setProjects={setProjects} setModalVisible={setModalVisible}/>
+				: <IconButton style={styles.addProjButton} icon="plus" size={35} onPress={onPress}/>
+			}
 		</View>
 	);
 }
 
 const NewProjectModal = ({setProjects, setModalVisible}) => {
-	const setInitialState = () => ({
-		title: '',
-		budget: 0,
-		address: '',
-	})
+	const setInitialState = () => ({title: '', budget: 0, address: ''});
 	const [newProjectData, setNewProjectData] = useState(() => setInitialState());
+	const [errors, setErrors] = useState(() => ({budget: '', title: '', creationBlocked: ''}));
 
 	const onProjectName = (text) => {
-		const title = text ? text.trim() : 'Untitled'
+		const title = text ? text.trim() : ''
+		if (!title) return setErrors((prev) => ({...prev, title: 'Project name is required'}));
+
+		setErrors((prev) => ({...prev, title: ''}));
 		setNewProjectData((prev) => ({
 			...prev,
 			title,
@@ -52,6 +51,9 @@ const NewProjectModal = ({setProjects, setModalVisible}) => {
 		}))
 	}
 	const onBudgetChange = (text) => {
+		if (isNaN(text)) return setErrors((prev) => ({...prev, budget: 'Should be a number'}));
+		setErrors((prev) => ({...prev, budget: ''}));
+
 		setNewProjectData((prev) => ({
 			...prev,
 			budget: text.trim()
@@ -59,6 +61,11 @@ const NewProjectModal = ({setProjects, setModalVisible}) => {
 	}
 
 	const onAdd = () => {
+		if (errors.budget || errors.title || !newProjectData.title || !newProjectData.budget) {
+			return setErrors((prev) => ({...prev, creationBlocked: 'Fill all required fields to create a Project'}));
+		};
+		setErrors((prev) => ({...prev, creationBlocked: ''}));
+
 		const newProject = {
 			id: Math.random().toString(36),
 			expenses: [],
@@ -69,7 +76,6 @@ const NewProjectModal = ({setProjects, setModalVisible}) => {
 		storage.set(newProject.id, JSON.stringify(newProject))
 		setModalVisible((prev) => !prev)
 	}
-
 	const onClose = () => setModalVisible((prev) => !prev);
 
 	return (
@@ -80,6 +86,7 @@ const NewProjectModal = ({setProjects, setModalVisible}) => {
 				placeholder='Project Name'
 				onChangeText={onProjectName}
 			/>
+			{ errors.title && <ErrorHelperText errorMsg={errors.title}/>}
 			<TextInput 
 				style={styles.modal.textInput}
 				underlineColor='transparent'
@@ -92,6 +99,8 @@ const NewProjectModal = ({setProjects, setModalVisible}) => {
 				placeholder='Budget'
 				onChangeText={onBudgetChange}
 			/>
+			{ errors.budget && <ErrorHelperText errorMsg={errors.budget}/>}
+			{ errors.creationBlocked && <ErrorHelperText errorMsg={errors.creationBlocked}/>}
 			<View style={{flex: 1, flexDirection: 'row', justifyContent: 'space-between'}}>
 				<IconButton icon="plus" iconColor='white' size={40} onPress={onAdd}/>
 				<IconButton icon="close" iconColor='white' size={40} onPress={onClose}/>
@@ -99,6 +108,12 @@ const NewProjectModal = ({setProjects, setModalVisible}) => {
 		</View>
 	)
 };
+
+const ErrorHelperText = ({errorMsg}) => {
+	return (
+		<HelperText type="error"> {errorMsg} </HelperText>
+	)
+}
 
 const styles = StyleSheet.create({ 
 	modal: {
@@ -114,6 +129,14 @@ const styles = StyleSheet.create({
 			borderTopRightRadius: 20,
 			borderBottomLeftRadius: 20,
 		}
+	},
+	addProjButton: {
+		margin: 0,
+		height: 40,
+		width: '100%',
+		borderWidth: 1,
+		borderColor: '#292F36',
+		borderRadius: 0,
 	},
 	container: {
 		flex: 1,
