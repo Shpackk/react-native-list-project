@@ -69,7 +69,7 @@ const NewProjectModal = ({setProjects, setModalVisible}) => {
 		const newProject = {
 			id: Math.random().toString(36),
 			expenses: [],
-			status: 'inProgress',
+			status: 'InProgress',
 			...newProjectData
 		};
 		setProjects((prev) => [newProject, ...prev]);
