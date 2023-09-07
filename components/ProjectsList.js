@@ -7,61 +7,59 @@ import {
 	Pressable,
 	View,
 } from 'react-native';
-import { IconButton, Button, Menu, Divider, PaperProvider } from 'react-native-paper';
+import { IconButton, Button, Menu, PaperProvider } from 'react-native-paper';
 import { Link } from 'expo-router'
-// import { storage } from '../system/storage';
+import { storage } from '../system/storage';
 
 const PressableItem = ({item, deleteProject}) => {
-	const [itemControlsVisible, toggleItemControls] = useState(false);
-	const onLongPress = () => toggleItemControls((prev) => !prev);
-
 	return (
 		<View>
-
-		<Link href={{
-			pathname: '/projects/[id]',
-			params: { id: item.id }
-		}} asChild key={`keyForLink${item.id}`}>
-			<Pressable style={styles.item} onLongPress={onLongPress}>
-				<TitleAndBudget title={item.title} budget={item.budget}/>
-				<Status status={item.status}/>
-				<AddressAndControlls address={item.address}/>
-			</Pressable>
-		</Link>
+			<Link href={{
+				pathname: '/projects/[id]',
+				params: { id: item.id }
+			}} asChild key={`keyForLink${item.id}`}>
+				<Pressable style={styles.item}>
+					<TitleAndBudget title={item.title} budget={item.budget}/>
+					<Status status={item.status}/>
+					<AddressAndControlls address={item.address} deleteProject={deleteProject} itemId={item.id}/>
+				</Pressable>
+			</Link>
 		</View>
 
 	)
 }
 
-const AddressAndControlls = ({address}) => {
+const AddressAndControlls = ({address, deleteProject, itemId}) => {
 	const [visible, setVisible] = useState(false)
 	const onPress = () => setVisible(prev => !prev);
 
+	const deleteOnPress = () => {
+		setVisible(false);
+		deleteProject(itemId);
+		storage.delete(itemId);
+	}
+	const editOnPress = () => {
 
-// 	const confirmDeletion = () => {
-// 		toggleItemControls(false);
-// 		deleteProject(itemId);
-// 		storage.delete(itemId);
-// 	}
+	}
 
 	return (
 		<PaperProvider>
 			<View style={styles.addressAndControls}>
 				<Text style={styles.address}>{address}</Text>
-				<Menu style={{top: -100, zIndex: 1000, position: 'absolute'}}
+				<Menu 
+					style={{top: -100}}
 					visible={visible}
 					onDismiss={onPress}
 					anchorPosition='top'
 					anchor={<IconButton icon={'dots-horizontal'} iconColor='white' size={24} onPress={onPress}/>}>
-						<Menu.Item onPress={() => {}} title="Delete" />
-						<Menu.Item onPress={() => {}} title="Edit" />
+						<Menu.Item onPress={deleteOnPress} title="Delete" />
+						<Menu.Item onPress={editOnPress} title="Edit" />
 						<Menu.Item onPress={() => setVisible(false)} title="Close" />
 				</Menu>
 			</View>
 		</PaperProvider>
 	)
 }
-
 
 const TitleAndBudget = ({title, budget}) => {
 	return (
