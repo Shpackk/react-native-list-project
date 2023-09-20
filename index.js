@@ -1,27 +1,23 @@
 import { registerRootComponent } from 'expo';
 
 import App from './App';
-import { 
-	PaperProvider,
-	MD3DarkTheme as DefaultTheme,
-} from 'react-native-paper';
+import { PaperProvider, MD3DarkTheme as DefaultTheme } from 'react-native-paper';
 
 const theme = {
-	...DefaultTheme,
-	colors: {
-		...DefaultTheme.colors,
-		primary: 'tomato',
-		secondary: 'gray'
-	}
-}
+    ...DefaultTheme,
+    colors: {
+        ...DefaultTheme.colors,
+        primary: 'tomato',
+        secondary: 'gray',
+    },
+};
 
-export default function Main () {
-
-	return (
-		<PaperProvider theme={theme}>
-			<App/>
-		</PaperProvider>
-	)
+export default function Main() {
+    return (
+        <PaperProvider theme={theme}>
+            <App />
+        </PaperProvider>
+    );
 }
 
 // registerRootComponent calls AppRegistry.registerComponent('main', () => App);
