@@ -5,17 +5,20 @@ import {
 	DataTable,
 	TextInput,
 	Text,
-	IconButton,
-	MD3Colors
+	Button,
+	Switch,
 } from "react-native-paper"
 import { useLocalSearchParams, router } from 'expo-router'
 import { StyleSheet, View } from "react-native"
 import { storage } from "../../system/storage"
 import { useMMKVObject } from "react-native-mmkv"
+import { PaycheckTable } from "../../components/PaycheckTable"
 
 const ProjectItem = () => {
 	const local = useLocalSearchParams();
 	const [currentProject, _] = useMMKVObject(local.id);
+	const [tableToggle, setTableToggle] = useState(false);
+	const budget = currentProject.budget.reduce((acc, paycheck) => acc + Number(paycheck.amount), 0)
 	/*
 		expenses: {
 			key:
@@ -26,43 +29,48 @@ const ProjectItem = () => {
 		}
 	 */
 	const [totalPrice, setTotalPrice] = useState(0);
-
 	// togglers
-	const [expenseInputVisible, setExpenseInputVisible] = useState(false);
+	const [inputVisible, setInputVisible] = useState(false);
 	const [forEdit, setForEdit] = useState(false);
 	const [pickedRow, setPickedRow] = useState(null);
 
 	useEffect(() => {
 		const newPrice = currentProject.expenses.reduce((prev, curr) =>  prev += Number(curr.price * curr.amount) ,0)
 		setTotalPrice(newPrice)
+		console.log(currentProject)
 		storage.set(local.id, JSON.stringify(currentProject));
-	}, [currentProject.expenses.length, forEdit])
-
+	}, [currentProject.expenses.length, currentProject.budget.length, forEdit])
 
 	return (
 		<View style={{...styles.container }}> 
-			<TopNavBar projectName={currentProject.title} />
-			<Table expenses={currentProject.expenses} setPickedRow={setPickedRow} pickedRow={pickedRow}/>
-			<TotalBar totalPrice={totalPrice} budget={currentProject.budget}/>
+			<TopNavBar projectName={currentProject.title} tableToggle={tableToggle} setTableToggle={setTableToggle}/>
+			{
+				tableToggle ? <PaycheckTable budget={currentProject.budget} />
+				: <Table expenses={currentProject.expenses} setPickedRow={setPickedRow} pickedRow={pickedRow}/>
+			}
+			<TotalBar totalPrice={totalPrice} budget={budget}/>
 			{	
-				expenseInputVisible && 
+				inputVisible && 
 					<ExpenseTextInput
 						forEdit={forEdit}
 						setForEdit={setForEdit}
 						expenses={currentProject.expenses} 
-						setExpenseInputVisible={setExpenseInputVisible}
+						budget={currentProject.budget}
+						setInputVisible={setInputVisible}
 						pickedRow={pickedRow}
 						setPickedRow={setPickedRow}
+						tableToggle={tableToggle}
 					/>
 			}{
-				!expenseInputVisible && 
+				!inputVisible && 
 					<IconsMenu 
-						setExpenseInputVisible={setExpenseInputVisible} 
-						expenseInputVisible={expenseInputVisible}	
+						setInputVisible={setInputVisible} 
+						inputVisible={inputVisible}	
 						pickedRow={pickedRow}
 						currentProject={currentProject}
 						setPickedRow={setPickedRow}
 						setForEdit={setForEdit}
+						tableToggle={tableToggle}
 					/>
 			}
 		</View>
@@ -116,16 +124,16 @@ const Table = ({expenses, setPickedRow, pickedRow}) => {
       		/>
 			</DataTable>
 		</PaperProvider>
-	  );
+	);
 }
 
 
-const IconsMenu = ({setExpenseInputVisible, pickedRow, currentProject, setPickedRow, setForEdit}) => {
+const IconsMenu = ({setInputVisible, pickedRow, currentProject, setPickedRow, setForEdit, tableToggle}) => {
 	const pickedStyles = {
 		justifyContent: pickedRow ? 'space-between' : 'center',
 	}
 	const onAddPress = () => {
-		setExpenseInputVisible((prevState) => !prevState)
+		setInputVisible((prevState) => !prevState)
 	}
 
 	const onDeletePress = () => {
@@ -136,34 +144,42 @@ const IconsMenu = ({setExpenseInputVisible, pickedRow, currentProject, setPicked
 
 	const onEditPress = () => {
 		setForEdit((prev) => !prev)
-		setExpenseInputVisible((prev) => !prev)
+		setInputVisible((prev) => !prev)
 	}
 
 	return (
 		<View style={{...styles.buttonsMenu, ...pickedStyles}}>
 			{pickedRow &&
 				<>
-				<IconButton
+				<Button
 					icon="pencil"
-					iconColor={MD3Colors.neutral100}
-					size={30}
 					onPress={onEditPress}
-				/>
-				<IconButton
+					labelStyle={{fontSize: 15, color: 'white'}}
+				>Edit</Button>
+				<Button
 					icon="minus"
-					iconColor={MD3Colors.neutral100}
-					size={30}
 					onPress={onDeletePress}
-				/>
+					labelStyle={{fontSize: 15, color: 'white'}}
+				>Delete</Button>
 				</>
 			}
 			{!pickedRow &&
-				<IconButton
-					icon="plus"
-					iconColor={MD3Colors.neutral100}
-					size={30}
-					onPress={onAddPress}
-				/>
+				<>
+					{
+						tableToggle ?
+							<Button
+								icon="plus"
+								onPress={onAddPress}
+								labelStyle={{fontSize: 15, color: 'white'}}
+							>Add Paycheck</Button>
+							:
+							<Button
+								icon="minus"
+								onPress={onAddPress}
+								labelStyle={{fontSize: 15, color: 'white'}}
+							>Add expense</Button>
+					}
+				</>
 			}
 		</View>
 	)
@@ -171,10 +187,10 @@ const IconsMenu = ({setExpenseInputVisible, pickedRow, currentProject, setPicked
 
 const TotalBar = ({totalPrice, budget}) => {
 	return (
-		<View style={{flexDirection: 'column'}}>
-			<ReturnTopicValuePair topic={'Expenses'} value={totalPrice} valueColor={'yellow'}/>
-			<ReturnTopicValuePair topic={'Budget'} value={budget} valueColor={'green'}/>
-			<ReturnTopicValuePair topic={'Result'} value={budget - totalPrice} valueColor={'cyan'}/>
+		<View style={styles.totalBar}>
+			<ReturnTopicValuePair value={budget} valueColor={'green'}/>
+			<ReturnTopicValuePair topic={'-'} value={totalPrice} valueColor={'yellow'}/>
+			<ReturnTopicValuePair topic={'='} value={budget - totalPrice} valueColor={'cyan'}/>
 		</View>
 	)
 }
@@ -185,42 +201,51 @@ const ReturnTopicValuePair = ({topic, value, valueColor}) => {
 		<Text 
 			variant="headlineSmall"
 			style={{
-				backgroundColor: 'black',
 				color: 'white',
-				paddingBottom: 5,
-				paddingLeft: 5,
+				paddingLeft: 20,
+				paddingRight: 20,
 			}}
-		>{topic}:</Text>
+		>{topic}</Text>
 		<Text 
 			variant="headlineSmall"
 			style={{
-				backgroundColor: 'black',
+				paddingLeft: 20,
+				paddingRight: 20,
 				color: valueColor,
-				paddingBottom: 5,
-				paddingLeft: 5,
 			}}
 		>{value}</Text>
 	</>
   )
 }
 
-const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit, pickedRow, setPickedRow}) => {
+const ExpenseTextInput = ({expenses, budget, setInputVisible, forEdit, setForEdit, pickedRow, setPickedRow, tableToggle}) => {
 	const [input, setInput] = useState(() => {
-		if (forEdit) {
-			const {type, parameters, amount, price} = pickedRow;
-			return `${type},${parameters},${amount},${price}`;
-		}
-		return ''
+			if (forEdit) {
+				const {type, parameters, amount, price} = pickedRow;
+				return `${type},${parameters},${amount},${price}`;
+			}
+			return ''
 	});
 
 	const onChangeText = (something) => {
 		setInput(something)
-	}
+	};
 
 	const onSubmitEditing = ({nativeEvent: {text}}) => {
 		const items = text.split(',')
+		if (tableToggle) {
+			if (!text) return setInputVisible(false);
+
+			budget.push({
+				amount: text,
+				date: new Date(Date.now()).toLocaleDateString(),
+			})
+			setInput('')
+			setInputVisible(false)
+			return;
+		};
 		if (!forEdit) {
-			if (!text) return setExpenseInputVisible(false);
+			if (!text) return setInputVisible(false);
 
 			expenses.push({
 				key: expenses.at(-1)?.key + 1 || 1,
@@ -230,7 +255,7 @@ const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit
 				price: items[3]
 			})
 			setInput('')
-			setExpenseInputVisible(false)
+			setInputVisible(false)
 		} else {
 			expenses[pickedRow.index] = {
 				key: expenses[pickedRow.index].key,
@@ -242,7 +267,7 @@ const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit
 			
 			setInput('')
 			setForEdit(false)
-			setExpenseInputVisible(false)
+			setInputVisible(false)
 			setPickedRow(null)
 		}
 	};
@@ -258,7 +283,7 @@ const ExpenseTextInput = ({expenses, setExpenseInputVisible, forEdit, setForEdit
 	)
 }
 
-const TopNavBar = ({projectName}) => {
+const TopNavBar = ({projectName, tableToggle, setTableToggle}) => {
 	const onPress = () => {
 		router.back();
 	}
@@ -272,6 +297,7 @@ const TopNavBar = ({projectName}) => {
 		>
 			<Appbar.BackAction color='white' onPress={onPress}/>
 			<Appbar.Content color='white' title={projectName}/>
+			<Switch value={tableToggle} onValueChange={setTableToggle}/>
 	  	</Appbar.Header>
 	)
 }
@@ -290,7 +316,13 @@ const styles = StyleSheet.create({
 	},
 	buttonsMenu: {
 		flexDirection: 'row',
-		backgroundColor: 'black'
+		backgroundColor: 'black',
+		justifyContent: 'space-between'
+	},
+	totalBar: {
+		flexDirection: 'row',
+		backgroundColor: 'black',
+		justifyContent: 'center',
 	},
 })
 

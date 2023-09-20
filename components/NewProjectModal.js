@@ -5,7 +5,7 @@ import { storage } from '../system/storage';
 import { validateProjectData } from '../app/helpers/validators';
 
 export const NewProjectModal  = ({setProjects, setModalVisible, modalVisible}) => {
-	const setInitialState = () => ({title: '', budget: 0, address: '', status: 'inProgress'});
+	const setInitialState = () => ({title: '', budget: [], address: '', status: 'inProgress'});
 	const [newProject, setNewProject] = useState(() => setInitialState());
 	const [errors, setErrors] = useState(null);
 	
@@ -29,7 +29,7 @@ export const NewProjectModal  = ({setProjects, setModalVisible, modalVisible}) =
 	return (
 		<Modal visible={modalVisible} onDismiss={() => setModalVisible(false)} contentContainerStyle={styles.modalContentStyle}>
 			<View style={{
-				flex: 1
+				flex: 1,
 			}}>
 				<ModalInputField 
 					placeholder={'Title'}
@@ -45,13 +45,6 @@ export const NewProjectModal  = ({setProjects, setModalVisible, modalVisible}) =
 					submitForm={submitForm}
 					errors={errors}
 					/>
-				<ModalInputField 
-					placeholder={'Budget'}
-					dataKey={'budget'}
-					updateProjectData={setNewProject}
-					submitForm={submitForm}
-					errors={errors}
-					/>
 				<ProjectStatusPicker 
 					updateProjectData={setNewProject}
 					/>
@@ -62,6 +55,7 @@ export const NewProjectModal  = ({setProjects, setModalVisible, modalVisible}) =
 
 const ModalInputField = ({errors, placeholder, updateProjectData, dataKey, submitForm}) => {
 	const onChange = (text) => {
+	console.log('change to =', text)
 		updateProjectData((prev) => ({
 			...prev,
 			[dataKey]: text.trim(),
@@ -113,7 +107,7 @@ const styles = StyleSheet.create({
 		backgroundColor: 'black',
 		padding: 20,
 		width: '90%',
-		height: '65%',
+		height: '50%',
 		alignSelf: 'center',
 	},
 	textInput: {

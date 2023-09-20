@@ -62,10 +62,11 @@ const AddressAndControlls = ({address, deleteProject, itemId}) => {
 }
 
 const TitleAndBudget = ({title, budget}) => {
+	const total = budget.reduce((acc, paycheck) => acc + Number(paycheck.amount), 0);
 	return (
 		<View style={styles.titleAndControlsContrainer}>
 			<Text style={styles.title}>{title}</Text>
-			<Text style={styles.budget}>₴{budget}</Text>
+			<Text style={styles.budget}>₴{total}</Text>
 		</View>
 	)
 }
