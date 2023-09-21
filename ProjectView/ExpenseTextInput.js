@@ -29,6 +29,7 @@ export const ExpenseTextInput = ({
             if (!text) return setInputVisible(false);
 
             budget.push({
+                key: budget.at(-1)?.key + 1 || 1,
                 amount: text,
                 date: new Date(Date.now()).toLocaleDateString(),
             });

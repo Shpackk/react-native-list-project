@@ -10,8 +10,8 @@ export const IconsMenu = ({ setInputVisible, pickedRow, currentProject, setPicke
     };
 
     const onDeletePress = () => {
-        const keyToDelete = pickedRow.key;
-        currentProject.expenses = currentProject.expenses.filter((expense) => expense.key !== keyToDelete);
+		const entityToDelete = tableToggle ? 'budget' : 'expenses';
+        currentProject[entityToDelete] = currentProject[entityToDelete].filter((entity) => entity.key !== pickedRow.key);
         setPickedRow(null);
     };
 

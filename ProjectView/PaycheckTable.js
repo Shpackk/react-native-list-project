@@ -16,9 +16,6 @@ export const PaycheckTable = ({ budget, setPickedRow, pickedRow }) => {
     useEffect(() => {
         setPage(0);
     }, [itemsPerPage]);
-    {
-        /* style={{backgroundColor: pickedRow?.key === paycheck.key ? 'gray' : 'black'}} onPress={() => onPress({...paycheck, index})} key={paycheck.key} */
-    }
 
     return (
         <PaperProvider>
@@ -29,7 +26,7 @@ export const PaycheckTable = ({ budget, setPickedRow, pickedRow }) => {
                 </DataTable.Header>
 
                 {budget.slice(from, to).map((paycheck, index) => (
-                    <DataTable.Row key={'paycheck' + index}>
+                    <DataTable.Row  style={{backgroundColor: pickedRow?.key === paycheck.key ? 'gray' : 'black'}} onPress={() => onPress({...paycheck, index})} key={'paycheck' + index}>
                         <MakeCentric Component={DataTable.Cell} data={paycheck.amount + '₴'} />
                         <MakeCentric Component={DataTable.Cell} data={paycheck.date} />
                     </DataTable.Row>

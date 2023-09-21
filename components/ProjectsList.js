@@ -4,7 +4,32 @@ import { IconButton, Button, Menu, PaperProvider } from 'react-native-paper';
 import { Link } from 'expo-router';
 import { storage } from '../system/storage';
 
-const PressableItem = ({ item, deleteProject }) => {
+const ProjectsList = ({ projects, setProjects }) => {
+    const deleteProject = (projectId) => setProjects((prev) => prev.filter((project) => project.id !== projectId));
+    const updateStatus = (projectId) => setProjects((prev) => {
+		return prev.map((project) => {
+			if (project.id === projectId) {
+				project.status = project.status === 'inProgress' ? 'Done' : 'inProgress';
+				storage.set(projectId, JSON.stringify(project));
+			};
+			return project;
+		})
+	});
+	return (
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={projects}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                    <PressableItem item={item} key={`projectItem${item.id}`} deleteProject={deleteProject} updateStatus={updateStatus}/>
+                )}
+            />
+        </SafeAreaView>
+    );
+};
+
+const PressableItem = ({ item, deleteProject, updateStatus }) => {
     return (
         <View>
             <Link
@@ -17,7 +42,7 @@ const PressableItem = ({ item, deleteProject }) => {
             >
                 <Pressable style={styles.item}>
                     <TitleAndBudget title={item.title} budget={item.budget} />
-                    <Status status={item.status} />
+                    <Status status={item.status} itemId={item.id} updateStatus={updateStatus}/>
                     <AddressAndControlls address={item.address} deleteProject={deleteProject} itemId={item.id} />
                 </Pressable>
             </Link>
@@ -34,7 +59,6 @@ const AddressAndControlls = ({ address, deleteProject, itemId }) => {
         deleteProject(itemId);
         storage.delete(itemId);
     };
-    const editOnPress = () => {};
 
     return (
         <PaperProvider>
@@ -48,7 +72,6 @@ const AddressAndControlls = ({ address, deleteProject, itemId }) => {
                     anchor={<IconButton icon={'dots-horizontal'} iconColor="white" size={24} onPress={onPress} />}
                 >
                     <Menu.Item onPress={deleteOnPress} title="Delete" />
-                    <Menu.Item onPress={editOnPress} title="Edit" />
                     <Menu.Item onPress={() => setVisible(false)} title="Close" />
                 </Menu>
             </View>
@@ -66,31 +89,17 @@ const TitleAndBudget = ({ title, budget }) => {
     );
 };
 
-const Status = ({ status }) => {
+const Status = ({ status, itemId, updateStatus }) => {
     const statusColor = status === 'inProgress' ? '#F2BB2C' : '#58B8B2';
     const statusName = status === 'inProgress' ? 'In Progress' : 'Done';
     const statusIcon = status === 'inProgress' ? 'hammer' : 'home';
 
+	const changeStatus = () => updateStatus(itemId);
+
     return (
-        <Button icon={statusIcon} textColor={statusColor} style={styles.status}>
+        <Button icon={statusIcon} textColor={statusColor} style={styles.status} onPress={changeStatus}>
             {statusName}
         </Button>
-    );
-};
-
-const ProjectsList = ({ projects, setProjects }) => {
-    const deleteProject = (projectId) => setProjects((prev) => prev.filter((project) => project.id !== projectId));
-    return (
-        <SafeAreaView style={styles.container}>
-            <FlatList
-                data={projects}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                    <PressableItem item={item} key={`fucking${item.id}`} deleteProject={deleteProject} />
-                )}
-            />
-        </SafeAreaView>
     );
 };
 
@@ -102,13 +111,13 @@ const styles = StyleSheet.create({
     },
     item: {
         padding: 20,
-        marginVertical: 4,
-        width: '90%',
+        marginVertical: 5,
+        width: '93%',
         borderRadius: 16,
         backgroundColor: '#35373E',
         borderWidth: 1,
         borderColor: '#555555',
-        left: 20,
+        left: 15,
     },
     titleAndControlsContrainer: {
         flex: 1,

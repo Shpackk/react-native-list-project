@@ -1,20 +1,10 @@
 import { registerRootComponent } from 'expo';
-
+import { PaperProvider } from 'react-native-paper';
 import App from './App';
-import { PaperProvider, MD3DarkTheme as DefaultTheme } from 'react-native-paper';
-
-const theme = {
-    ...DefaultTheme,
-    colors: {
-        ...DefaultTheme.colors,
-        primary: 'tomato',
-        secondary: 'gray',
-    },
-};
 
 export default function Main() {
     return (
-        <PaperProvider theme={theme}>
+        <PaperProvider>
             <App />
         </PaperProvider>
     );

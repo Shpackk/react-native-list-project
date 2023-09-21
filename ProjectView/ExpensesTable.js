@@ -37,7 +37,7 @@ export const ExpensesTable = ({ expenses, setPickedRow, pickedRow }) => {
                         <DataTable.Cell>{expense.type}</DataTable.Cell>
                         <DataTable.Cell numeric>{expense.parameters}</DataTable.Cell>
                         <DataTable.Cell numeric>{expense.amount}</DataTable.Cell>
-                        <DataTable.Cell numeric>{expense.price}</DataTable.Cell>
+                        <DataTable.Cell numeric>{expense.price + '₴'}</DataTable.Cell>
                     </DataTable.Row>
                 ))}
 

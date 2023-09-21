@@ -4,28 +4,28 @@ import { StyleSheet, View } from 'react-native';
 import { storage } from '../../system/storage';
 import { useMMKVObject } from 'react-native-mmkv';
 import { ExpensesTable, ExpenseTextInput, IconsMenu, PaycheckTable, TopNavBar, TotalBar } from '../../ProjectView';
+/*
+	expenses: {
+		key:
+		type: 
+		parameter:
+		amount:
+		price:
+	}
+ */
 
 const ProjectItem = () => {
     const local = useLocalSearchParams();
     const [currentProject, _] = useMMKVObject(local.id);
-    const [tableToggle, setTableToggle] = useState(false);
-    const budget = currentProject.budget.reduce((acc, paycheck) => acc + Number(paycheck.amount), 0);
-    /*
-		expenses: {
-			key:
-			type: 
-			parameter:
-			amount:
-			price:
-		}
-	 */
     const [totalPrice, setTotalPrice] = useState(0);
+    const budget = currentProject.budget.reduce((acc, paycheck) => acc + Number(paycheck.amount), 0);
     // togglers
+    const [tableToggle, setTableToggle] = useState(false);
     const [inputVisible, setInputVisible] = useState(false);
     const [forEdit, setForEdit] = useState(false);
     const [pickedRow, setPickedRow] = useState(null);
 
-    useEffect(() => {
+	useEffect(() => {
         const newPrice = currentProject.expenses.reduce((prev, curr) => (prev += Number(curr.price * curr.amount)), 0);
         setTotalPrice(newPrice);
         storage.set(local.id, JSON.stringify(currentProject));
@@ -35,7 +35,7 @@ const ProjectItem = () => {
         <View style={{ ...styles.container }}>
             <TopNavBar projectName={currentProject.title} tableToggle={tableToggle} setTableToggle={setTableToggle} />
             {tableToggle ? (
-                <PaycheckTable budget={currentProject.budget} />
+                <PaycheckTable budget={currentProject.budget} setPickedRow={setPickedRow} pickedRow={pickedRow}/>
             ) : (
                 <ExpensesTable expenses={currentProject.expenses} setPickedRow={setPickedRow} pickedRow={pickedRow} />
             )}
