@@ -1,11 +1,11 @@
 {
-	"build": {
-		"preview": {
-			"node": "18.12.1",
-			"android": {
-		  		"buildType": "apk"
-			}
-		},
-		"production": {}
-	}
+    "build": {
+        "preview": {
+            "node": "18.12.1",
+            "android": {
+                "buildType": "apk"
+            }
+        },
+        "production": {}
+    }
 }
